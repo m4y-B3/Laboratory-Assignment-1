@@ -1,0 +1,53 @@
+// Assignment 1 – STM32 GPIO with Arduino IDE
+// Modes: 1 = Blink, 2 = Polling, 3 = Interrupt Toggle
+#define LED_PIN     PC13        // Onboard LED (active-low)
+#define BUTTON_PIN  PA0         // User button
+#define DEMO_MODE  3           // << Change this to 1, 2, or 3 to test each demo
+
+volatile bool ledState = false;
+
+void setup() {
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, HIGH); // Turn OFF LED initially (active-low)
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+
+  #if DEMO_MODE == 3
+    attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), handleButtonInterrupt, FALLING);
+  #endif
+}
+
+void loop() {
+  #if DEMO_MODE == 1
+    // Demo 1: Blink LED at 1Hz
+    digitalWrite(LED_PIN, LOW);   // LED ON
+    delay(500);
+    digitalWrite(LED_PIN, HIGH);  // LED OFF
+    delay(500);
+
+  #elif DEMO_MODE == 2
+    // Demo 2: Blink while button held (polling)
+    if (digitalRead(BUTTON_PIN) == LOW) {
+      digitalWrite(LED_PIN, LOW);  // LED ON
+      delay(250);
+      digitalWrite(LED_PIN, HIGH); // LED OFF
+      delay(250);
+    } else {
+      digitalWrite(LED_PIN, HIGH); // LED OFF
+    }
+
+  #elif DEMO_MODE == 3
+    // Demo 3: Toggle LED on button press (interrupt)
+    digitalWrite(LED_PIN, ledState ? LOW : HIGH); // active-low LED
+    delay(10);  // Minimal flicker control
+  #endif
+}
+
+// ISR for button press (Demo 3)
+void handleButtonInterrupt() {
+  static unsigned long lastPress = 0;
+  unsigned long now = millis();
+  if (now - lastPress > 200) { // Simple debounce
+    ledState = !ledState;
+    lastPress = now;
+  }
+}
